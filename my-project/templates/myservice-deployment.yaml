@@ -1,0 +1,96 @@
+{{- if .Values.myservice.enabled -}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ (include "myproject.fullname" .) }}-myservice
+  namespace: {{ (include "myproject.namespace" .) }}
+spec:
+  strategy:
+    type: {{ .Values.myservice.updateStrategy }}
+  replicas: {{ .Values.myservice.replicas }}
+  selector:
+    matchLabels:
+      app: myservice
+  template:
+    metadata:
+      labels:
+        app: myservice
+        {{- include "myproject.metaLabels" . | nindent 8 }}
+        {{- range $key, $value := .Values.myservice.labels }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+      annotations:
+        {{- range $key, $value := .Values.myservice.annotations }}
+        {{ $key }}: {{ $value | quote }}
+        {{- end }}
+    spec:
+    {{- if .Values.myservice.affinity.enabled }}
+      affinity:
+        podAntiAffinity:
+          {{- if eq .Values.myservice.affinity.type "soft" }}
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: myservice
+              topologyKey: kubernetes.io/hostname
+          {{- else if eq .Values.myservice.affinity.type "hard" }}
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: myservice
+            topologyKey: kubernetes.io/hostname
+          {{- end }}
+    {{- end }}
+      topologySpreadConstraints:
+      - maxSkew: {{ .Values.myservice.spread.maxSkew }}
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: {{ .Values.myservice.spread.whenUnsatisfiable }}  
+        labelSelector:
+          matchLabels:
+            app: myservice
+      imagePullSecrets:
+      {{- range .Values.imagePullSecrets }}
+      - name: {{ .name }}
+      {{- end }}
+      containers:
+      - name: myservice
+        image: {{ (include "myservice.image" .) }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.myservice.service.targetPort }}
+        {{- if or (eq .Values.myservice.service.mode "range") (eq .Values.myservice.service.mode "random") }}
+        {{- range $i, $p := until (add1 (sub .Values.myservice.service.range.end .Values.myservice.service.range.start) | int) }}
+        - containerPort: {{ add $.Values.myservice.service.range.start $i }}
+          protocol: UDP
+        {{- end }}
+        {{- end }}
+        env:
+        - name: EXTERNAL_PORT
+          value: "{{ .Values.myservice.nodePort.nodePort }}"
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        {{ if .Values.myservice.tls.enabled -}}
+        volumeMounts:
+        - name: tls-secret-volume
+          mountPath: /certs
+          readOnly: true
+        {{- end -}}
+        {{/* Set probe sections */}}
+        {{- $probeConfig := dict -}}
+        {{- $probeConfig := merge $probeConfig .Values.myservice.probes -}}
+        {{- $_ := set $probeConfig "port" .Values.myservice.service.targetPort -}}
+        {{ include "myproject.probes" $probeConfig | nindent 8 }}
+        {{/* Set limit and request sections */}}
+        {{- include "myproject.resources" .Values.myservice.resources | indent 8 }}
+      {{ if .Values.myservice.tls.enabled }}
+      volumes:
+      - name: tls-secret-volume
+        secret:
+          secretName: {{ .Values.myservice.tls.name }}
+      {{- end -}}
+{{- end -}}

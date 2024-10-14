@@ -1,0 +1,15 @@
+{{- if and (.Values.myservice.enabled) (.Values.myservice.loadBalancer.enabled) }}
+
+{{- $myserviceConfig := dict -}}
+{{- $myserviceConfig = merge $myserviceConfig .Values.myservice.loadBalancer -}}
+{{- $_ := set $myserviceConfig "fullName" (include "myproject.fullname" .) -}}
+{{- $_ := set $myserviceConfig "namespace" (include "myproject.namespace" .) -}}
+{{- $_ := set $myserviceConfig "metaLabels" (include "myproject.metaLabels" .) -}}
+{{- $_ := set $myserviceConfig "serviceName" "myservice" -}}
+{{- $_ := set $myserviceConfig "portName" "tcp" -}}
+{{- $_ := set $myserviceConfig "port" .Values.myservice.service.port -}}
+{{- $_ := set $myserviceConfig "targetPort" .Values.myservice.service.targetPort -}}
+{{- $_ := set $myserviceConfig "protocol" "TCP" -}}
+
+{{- include "myproject.loadBalancer" $myserviceConfig }}
+{{- end }}

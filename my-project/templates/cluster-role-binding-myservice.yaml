@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ (include "myproject.fullname" .) }}-myservice
+  labels:
+    {{- include "myproject.metaLabels" . | nindent 4 }}
+    app.kubernetes.io/component: myservice
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ (include "myproject.fullname" .) }}-myservice
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: {{ (include "myproject.namespace" .) }}

@@ -1,0 +1,11 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ (include "myproject.fullname" .) }}-myservice
+  labels:
+    {{- include "myproject.metaLabels" . | nindent 4 }}
+    app.kubernetes.io/component: myservice
+rules:
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get", "list", "watch"]

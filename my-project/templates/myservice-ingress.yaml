@@ -1,0 +1,15 @@
+{{- if and (.Values.myservice.enabled) (.Values.myservice.ingress.enabled) }}
+{{- $serviceConfig := dict -}}
+{{- $serviceConfig := merge $serviceConfig .Values.myservice -}}
+{{- $_ := set $serviceConfig "fullName" (include "myproject.fullname" .) -}}
+{{- $_ := set $serviceConfig "namespace" (include "myproject.namespace" .) -}}
+{{- $_ := set $serviceConfig "metaLabels" (include "myproject.metaLabels" .) -}}
+{{- $_ := set $serviceConfig "ingressType" .Values.ingressType -}}
+{{- $_ := set $serviceConfig "clusterIssuer" .Values.clusterIssuer -}}
+{{- $_ := set $serviceConfig "serviceName" "myservice" -}}
+
+{{- $defaultHost := printf "%s.%s" "my-service" .Values.domain -}}
+{{- $_ := set $serviceConfig "hosts" (default (list (dict "host" $defaultHost "paths" (list (dict "path" "/" "pathType" "Prefix")))) .Values.myservice.ingress.hosts) -}}
+
+{{- include "myproject.ingress" $serviceConfig }}
+{{- end -}}

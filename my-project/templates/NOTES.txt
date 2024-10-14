@@ -1,0 +1,27 @@
+Chart {{ .Chart.Name }} has been installed successfully!
+Your release is named {{ .Release.Name }}.
+
+
+{{ if .Values.myservice.enabled -}}
+My service service has been successfully installed with {{ .Values.myservice.replicas }} replicas
+{{- if .Values.myservice.ingress.enabled }}
+  My service is available at the following addresses:
+{{- $defaultHost := printf "%s.%s" "my-service" .Values.domain -}}
+{{- $hosts := default (list (dict "host" $defaultHost "paths" (list (dict "path" "/" "pathType" "Prefix")))) .Values.myservice.ingress.hosts -}}
+{{- range $host := $hosts }}
+    {{ $host.host }}
+{{- end -}}
+{{ end }}
+{{- if .Values.myservice.loadBalancer.enabled }}
+  The loadBalancer for the my service was created with externalTrafficPolicy={{ .Values.myservice.loadBalancer.externalTrafficPolicy }}
+{{ end }}
+{{- if .Values.myservice.nodePort.enabled }}
+  Node port TCP: {{ .Values.myservice.nodePort.nodePort }}
+  {{- if eq .Values.myservice.service.mode "range" }}
+  Node port UDP range: {{ .Values.myservice.nodePort.nodePortStart }}-{{ add .Values.myservice.nodePort.nodePortStart (sub .Values.myservice.service.range.end .Values.myservice.service.range.start) }}
+  {{ end -}}
+  {{- if eq .Values.myservice.service.mode "random" }}
+  Node port UDP are selected randomly. Count of ports: {{ sub .Values.myservice.service.range.end .Values.myservice.service.range.start }}
+  {{ end -}}
+{{ end -}}
+{{ end }}

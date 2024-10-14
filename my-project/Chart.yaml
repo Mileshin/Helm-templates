@@ -1,0 +1,12 @@
+---
+apiVersion: v2
+description: The my-project Helm chart
+name: my-project
+
+type: application
+sources:
+  - https://gitlab.com/Mileshin/my-project
+
+
+version: 0.0.1
+appVersion: "1.0"

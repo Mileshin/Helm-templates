@@ -1,0 +1,32 @@
+{{- if and (.Values.myservice.enabled) (.Values.myservice.nodePort.enabled) ( ne .Values.myservice.service.mode "disable") -}}
+---
+{{- $myserviceConfig := dict -}}
+{{- $myserviceConfig = merge $myserviceConfig .Values.myservice.nodePort -}}
+{{- $_ := set $myserviceConfig "fullName" (include "myproject.fullname" .) -}}
+{{- $_ := set $myserviceConfig "namespace" (include "myproject.namespace" .) -}}
+{{- $_ := set $myserviceConfig "metaLabels" (include "myproject.metaLabels" .) -}}
+{{- $_ := set $myserviceConfig "serviceName" "myservice" -}}
+{{- $_ := set $myserviceConfig "portName" "udp" -}}
+
+{{/*
+Create ports list
+*/}}
+{{- $ports := list -}}
+{{- if or (eq .Values.myservice.service.mode "range") (eq .Values.myservice.service.mode "random") }}
+  {{- range $i, $p := until (add1 (sub .Values.myservice.service.range.end .Values.myservice.service.range.start) | int) }}
+    {{- $udpPort := dict -}}
+    {{- $_ := set $udpPort "name" ($i | printf "udp-%d") -}}
+    {{- $_ := set $udpPort "port" (add $.Values.myservice.service.range.start $i) -}}
+    {{- $_ := set $udpPort "targetPort" (add $.Values.myservice.service.range.start $i) -}}
+    {{- $_ := set $udpPort "protocol" "UDP" -}}
+    {{- if eq $.Values.myservice.service.mode "range" }}
+      {{- $_ := set $udpPort "nodePort" (add $.Values.myservice.nodePort.nodePortStart $i) -}}
+    {{- end }}
+    {{- $ports = append $ports $udpPort  -}}
+  {{- end }}
+{{- end }}
+
+{{- $_ := set $myserviceConfig "ports" $ports -}}
+
+{{- include "myproject.nodePort" $myserviceConfig }}
+{{- end }}

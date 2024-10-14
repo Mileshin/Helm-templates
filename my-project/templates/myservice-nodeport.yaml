@@ -1,0 +1,25 @@
+{{- if and (.Values.myservice.enabled) (.Values.myservice.nodePort.enabled) }}
+
+{{- $myserviceConfig := dict -}}
+{{- $myserviceConfig = merge $myserviceConfig .Values.myservice.nodePort -}}
+{{- $_ := set $myserviceConfig "fullName" (include "myproject.fullname" .) -}}
+{{- $_ := set $myserviceConfig "namespace" (include "myproject.namespace" .) -}}
+{{- $_ := set $myserviceConfig "metaLabels" (include "myproject.metaLabels" .) -}}
+{{- $_ := set $myserviceConfig "serviceName" "myservice" -}}
+{{- $_ := set $myserviceConfig "portName" "http" -}}
+
+{{/*
+Create ports list
+*/}}
+{{- $port := dict -}}
+{{- $_ := set $port "name" "http" -}}
+{{- $_ := set $port "port" .Values.myservice.service.port -}}
+{{- $_ := set $port "targetPort" .Values.myservice.service.targetPort -}}
+{{- $_ := set $port "protocol" "TCP" -}}
+{{- $_ := set $port "nodePort" .Values.myservice.nodePort.nodePort -}}
+
+{{- $ports := list $port -}}
+{{- $_ := set $myserviceConfig "ports" $ports -}}
+
+{{- include "myproject.nodePort" $myserviceConfig }}
+{{- end }}

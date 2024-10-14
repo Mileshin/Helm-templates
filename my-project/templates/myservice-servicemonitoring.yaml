@@ -1,0 +1,12 @@
+{{- if and (.Values.myservice.enabled) (.Values.myservice.metrics.enabled) }}
+
+{{- $myserviceConfig := dict -}}
+{{- $myserviceConfig = merge $myserviceConfig .Values.myservice.metrics -}}
+{{- $_ := set $myserviceConfig "fullName" (include "myproject.fullname" .) -}}
+{{- $_ := set $myserviceConfig "namespace" (include "myproject.namespace" .) -}}
+{{- $_ := set $myserviceConfig "metaLabels" (include "myproject.metaLabels" .) -}}
+{{- $_ := set $myserviceConfig "matchLabels" (include "myproject.selectorLabels" .) -}}
+{{- $_ := set $myserviceConfig "serviceName" "myservice" -}}
+
+{{- include "myproject.ServiceMonitoring" $myserviceConfig }}
+{{- end }}

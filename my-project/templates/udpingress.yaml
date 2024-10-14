@@ -1,0 +1,14 @@
+
+{{- if and (.Values.myservice.enabled) (.Values.myservice.ingress.udp.enabled) }}
+
+{{- $udpIngressConfig := dict -}}
+{{- $udpIngressConfig = merge $udpIngressConfig .Values.myservice.ingress.udp -}}
+{{- $_ := set $udpIngressConfig "fullName" (include "myproject.fullname" .) -}}
+{{- $_ := set $udpIngressConfig "namespace" (include "myproject.namespace" .) -}}
+{{- $_ := set $udpIngressConfig "metaLabels" (include "myproject.metaLabels" .) -}}
+
+{{- /* Configure rules */ -}}
+{{- $_ := set $udpIngressConfig "rules" (list (dict "serviceName" "myservice" "servicePort" .Values.myservice.service.udpPort "port" "9000")) -}}
+
+{{- include "myproject.udpIngress" $udpIngressConfig }}
+{{- end }}

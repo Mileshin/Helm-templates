@@ -1,0 +1,182 @@
+###### General  ######
+
+### Override namepsace for my-project chart resources. By default, the chart creates resources in the release namespace.
+namespace: ""
+
+### Override only chart name part of prefix for resources
+### nameOverride: "my-project"
+### Override name prefix for resources
+#fullnameOverride: "my-project"
+
+### Add metalables 
+#metaLabels: {}
+
+### Secrets for access to gitlab
+imagePullSecrets:
+  - name: gitlab-registry-secret
+
+### Set cluster issuer name
+clusterIssuer: letsencrypt-prod
+
+### Set ingress type
+ingressType: nginx
+
+### Domain domain segment
+domain: my-service.com
+
+### Registry path
+registry: my-project
+tag: latest
+
+### MyService setting 
+myservice:
+  ## Enable or disable MyService
+  enabled: true
+  ## Rewrite registry for MyService
+  #  By default used .Values.registry/my-service
+  # image: registry.gitlab.com/my-project/my-service
+  # tag: latest
+  ## Set count of replicas
+  replicas: 1
+  ## Strictness of node affinity
+  # Possible values ​​are hard and soft
+  affinity:
+    enabled: true
+    type: "hard"
+  ## Set update strategy 
+  #  Possible values ​​are RollingUpdate and Recreate
+  updateStrategy: RollingUpdate
+  ## To specify labels for the MyService
+  labels: {}
+  ## To specify annotations for the MyService
+  annotations: {}
+
+  ## Set spread settings 
+  spread:
+    maxSkew: 1
+    #  Possible values ​​are ScheduleAnyway and DoNotSchedule 
+    whenUnsatisfiable: DoNotSchedule 
+
+  ## Probes settings
+  probes:
+    enabled: true
+    # Startup
+    startupProbe:
+      ## Set false for disable this probe
+      enabled: true
+      path: /healthcheck
+      initialDelaySeconds: 0
+      periodSeconds: 10
+      timeoutSeconds: 1
+      failureThreshold: 10
+      successThreshold: 1
+    readinessProbe:
+      ## Set false for disable this probe
+      enabled: true
+      path: /
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 1
+      failureThreshold: 3
+      successThreshold: 1
+    livenessProbe:
+      ## Set false for disable this probe
+      enabled: true
+      path: /healthcheck
+      initialDelaySeconds: 5
+      periodSeconds: 5
+      timeoutSeconds: 15
+      failureThreshold: 3
+      successThreshold: 1
+  ## Set limits and requests
+  resources:
+    enabled: true
+    requests:
+      enabled: true
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      enabled: true
+      cpu: "500m"
+      memory: "256Mi"
+
+  ## Describe service ports
+  # These variables are used for all service 
+  service:
+    ## Choose settings for service
+    # disable     — don't open UDP port  
+    # range mode  — open a range of ports. Range borders can be set in the range subsection. External range will start from .Values.nodePort.nodePortStart
+    # random mode — open a range of ports. Range borders can be set in the range subsection. External ports will be random
+    mode: random # range # random
+    port: 8080
+    targetPort: 80
+    ## Only for range and random mode
+    range:
+      start: 32500
+      end: 32600
+  
+  ## Create separate Loadbalancer for MyService
+  loadBalancer:
+    enabled: true
+    externalTrafficPolicy: Local
+    ## To specify labels for the MyService loadbalancer
+    labels: {}
+    ## To specify annotations for the MyService loadbalancer
+    annotations: {
+    }
+
+  ## Create separate Loadbalancer for MyService
+  nodePort:
+    enabled: true
+    externalTrafficPolicy: Local
+    ## To specify labels for the MyService NodePort
+    labels: {}
+    ## To specify annotations for the MyService NodePort
+    annotations: {}
+    ## Set port
+    nodePort: 30180
+    nodePortStart: 32500
+
+  ## Ingress settings
+  ingress:
+    ## Set true for creating ingress
+    enabled: true
+    ## Set true to add udp balancing via
+    # This parameter is used for kong.
+    udp: 
+      enabled: true
+    ## To specify labels for the MyService ingress
+    labels: {}
+    ## To specify annotations for the MyService ingress
+    annotations: {}
+    ## Override default host. 
+    # Default is my-service + .Values.domain
+    # hosts:
+    #   - host: my-service.com
+    #     paths:
+    #       - path: /
+    #         pathType: Prefix
+    ## Use ssl for access to ingress
+    # To obtain a self-signed certificate, you need to add cert-manager to the cluster and set the clusterIssuer variable
+    tls:
+      enabled: true
+      name: cert-my-service
+
+  ### tls
+  ## If this option is active, the certificate secret with the given name will be mounted in /certs
+  tls: 
+    ## Possible value true or false. 
+    enabled: true
+    name: cert-my-service
+
+  ## This parameter sets the annotation and allows you to create a servicemonitor for collecting metrics by prometheus  
+  metrics:
+    enabled: true
+    # Possible values prometheus and victoriametrics
+    provider: victoriametrics
+    ## Describe metrics endpoints
+    endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
