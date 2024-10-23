@@ -74,10 +74,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
-        {{ if .Values.myservice.tls.enabled -}}
+        {{ if .Values.myservice.volume.enabled -}}
         volumeMounts:
         - name: tls-secret-volume
-          mountPath: /certs
+          mountPath: /mnt
           readOnly: true
         {{- end -}}
         {{/* Set probe sections */}}
@@ -87,10 +87,20 @@ spec:
         {{ include "myproject.probes" $probeConfig | nindent 8 }}
         {{/* Set limit and request sections */}}
         {{- include "myproject.resources" .Values.myservice.resources | indent 8 }}
-      {{ if .Values.myservice.tls.enabled }}
+      {{ if .Values.myservice.volume.enabled }}
+      {{ if eq .Values.myservice.volume.type "secret" -}}
       volumes:
-      - name: tls-secret-volume
+      - name: my-volume
         secret:
-          secretName: {{ .Values.myservice.tls.name }}
+          secretName: {{ .Values.myservice.volume.secretName }}
       {{- end -}}
+      {{ if eq .Values.myservice.volume.type "hostpath" -}}
+      volumes:
+      - name: my-volume
+        hostPath:
+          path: {{ .Values.myservice.volume.hostpath }}
+          type: Directory
+      {{- end -}}
+      {{- end -}}
+
 {{- end -}}

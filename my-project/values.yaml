@@ -162,12 +162,16 @@ myservice:
       enabled: true
       name: cert-my-service
 
-  ### tls
-  ## If this option is active, the certificate secret with the given name will be mounted in /certs
-  tls: 
+  ### Volumes
+  ## If this option is active, the volume will be mounted in /mnt
+  volume: 
     ## Possible value true or false. 
     enabled: true
-    name: cert-my-service
+    # possdible values "secret" or "hostpath"
+    type: "hostpath"
+    secretName: secret-name
+    hostpath: "/hostdir"
+
 
   ## This parameter sets the annotation and allows you to create a servicemonitor for collecting metrics by prometheus  
   metrics:
